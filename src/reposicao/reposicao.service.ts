@@ -1,41 +1,37 @@
-import { Injectable } from '@nestjs/common';
-
-export interface Reposicao {
-    id: number;
-    quantidade: number;
-    produtoId: number;
-    valorUnitario: number;
-    valorTotal: number;
-    fornecedor: string;
-    dataReposicao: Date;
-}
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { Reposicao } from '@prisma/client';
 
 @Injectable()
 export class ReposicaoService {
-    private reposicoes: Reposicao[] = [];
+  constructor(private prisma: PrismaService) {}
 
-    findAll(): Reposicao[] {
-        return this.reposicoes;
-    }
+  async findAll(): Promise<Reposicao[]> {
+    return this.prisma.reposicao.findMany({ include: { produto: true } });
+  }
 
-    findOne(id: number): Reposicao | undefined {
-        return this.reposicoes.find(reposicao => reposicao.id === id);
-    }
+  async findOne(id: number): Promise<Reposicao> {
+    const reposicao = await this.prisma.reposicao.findUnique({ where: { id }, include: { produto: true } });
+    if (!reposicao) throw new NotFoundException(`Reposição ${id} não encontrada`);
+    return reposicao;
+  }
 
-    create(reposicao: Omit<Reposicao, 'id'>): Reposicao {
-        const novaReposicao: Reposicao = { ...reposicao, id: this.reposicoes.length + 1 };
-        this.reposicoes.push(novaReposicao);
-        return novaReposicao;
-    }
+  async create(data: Omit<Reposicao, 'id' | 'dataReposicao'>): Promise<Reposicao> {
+    return this.prisma.reposicao.create({
+      data: {
+        ...data,
+        dataReposicao: new Date(),
+      },
+    });
+  }
 
-    update(id: number, dados: Partial<Reposicao>): Reposicao {
-        const index = this.reposicoes.findIndex((r) => r.id === id);
-        this.reposicoes[index] = { ...this.reposicoes[index], ...dados };
-         return this.reposicoes[index];
-     }
+  async update(id: number, data: Partial<Omit<Reposicao, 'id'>>): Promise<Reposicao> {
+    await this.findOne(id);
+    return this.prisma.reposicao.update({ where: { id }, data });
+  }
 
-    remove(id: number): void {
-        this.reposicoes = this.reposicoes.filter((r) => r.id !== id);
-    }
-
+  async remove(id: number): Promise<Reposicao> {
+    await this.findOne(id);
+    return this.prisma.reposicao.delete({ where: { id } });
+  }
 }

@@ -1,32 +1,37 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
-import { ProdutosService, Produto } from './produtos.service';
+import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { ProdutosService } from './produtos.service';
+import { CreateProdutoDto } from './dto/create-produto.dto';
+import { Produto } from '@prisma/client';
 
 @Controller('produtos')
 export class ProdutosController {
-    constructor(private readonly produtosService: ProdutosService) {}
+  constructor(private readonly produtosService: ProdutosService) {}
 
-    @Get()
-    findAll(): Produto[] {
-        return this.produtosService.findAll();
-    }
-    
-    @Get(':id')
-    findOne(@Param('id') id: number): Produto | undefined {
-        return this.produtosService.findOne(id);
-    }
+  @Get()
+  async findAll(): Promise<Produto[]> {
+    return await this.produtosService.findAll();
+  }
 
-    @Post()
-    create(@Body() produto: Omit<Produto, 'id'>): Produto | undefined {
-        return this.produtosService.create(produto);
-    }
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<Produto | null> { 
+    return await this.produtosService.findOne(Number(id));
+  }
 
-    @Put(':id')
-    update(@Param('id') id: number, @Body() dados: Partial<Produto>): Produto | undefined {
-        return this.produtosService.update(id, dados);
-    }
+  @Post()
+  async create(@Body() dto: CreateProdutoDto): Promise<Produto> {
+    return await this.produtosService.create(dto);
+  }
 
-    @Delete(':id')
-    remove(@Param('id') id: number): void {
-        this.produtosService.remove(id);
-    }
+  @Put(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: Partial<CreateProdutoDto>, 
+  ): Promise<Produto> {
+    return await this.produtosService.update(Number(id), dto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<Produto> {
+    return await this.produtosService.remove(Number(id));
+  }
 }

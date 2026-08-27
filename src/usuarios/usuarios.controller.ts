@@ -1,32 +1,34 @@
 import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
-import { UsuariosService, Usuario } from './usuarios.service';
+import { UsuariosService } from './usuarios.service';
+import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { Usuario } from '@prisma/client';
 
 @Controller('usuarios')
-export class UsuariosController {   
-    constructor(private readonly usuariosService: UsuariosService) {}
+export class UsuariosController {
+  constructor(private readonly usuariosService: UsuariosService) {}
 
-    @Get()
-    findAll(): Usuario[] {
-        return this.usuariosService.findAll();
-    }
-    
-    @Get(':id')
-    findOne(@Param('id') id: number): Usuario | undefined {
-        return this.usuariosService.findOne(id);
-    }
+  @Get()
+  async findAll(): Promise<Usuario[]> {
+    return await this.usuariosService.findAll();
+  }
 
-    @Post()
-    create(@Body() usuario: Omit<Usuario, 'id'>): Usuario | undefined {
-        return this.usuariosService.create(usuario);
-    }
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<Usuario> {
+    return await this.usuariosService.findOne(Number(id));
+  }
 
-    @Put(':id')
-    update(@Param('id') id: number, @Body() dados: Partial<Usuario>): Usuario | undefined {
-        return this.usuariosService.update(id, dados);
-    }
+  @Post()
+  async create(@Body() dto: CreateUsuarioDto): Promise<Usuario> {
+    return await this.usuariosService.create(dto);
+  }
 
-    @Delete(':id')
-    remove(@Param('id') id: number): void {
-        this.usuariosService.remove(id);
-    }
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() dto: Partial<CreateUsuarioDto>): Promise<Usuario> {
+    return await this.usuariosService.update(Number(id), dto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<Usuario> {
+    return await this.usuariosService.remove(Number(id));
+  }
 }

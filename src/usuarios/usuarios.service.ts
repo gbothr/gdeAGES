@@ -1,44 +1,32 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { Usuario } from '@prisma/client';
 
-export enum Role {
-  ADMIN = 'admin',
-  FARMACEUTICO  = 'farmaceutico',
-  CAIXA = 'caixa',
-}
-
-export interface Usuario {
-    id: number;
-    nome: string;
-    role: Role;
-    cpf: string;
-    senha: string;
-}
 @Injectable()
 export class UsuariosService {
-    private usuarios: Usuario[] = [];
+  constructor(private prisma: PrismaService) {}
 
-    findAll(): Usuario[] {
-        return this.usuarios;
-    }
-    
-    findOne(id: number): Usuario | undefined {
-        return this.usuarios.find(usuario => usuario.id === id);
-    }
+  async findAll(): Promise<Usuario[]> {
+    return this.prisma.usuario.findMany();
+  }
 
-    create(usuario: Omit<Usuario, 'id'>): Usuario {
-        const novoUsuario: Usuario = { ...usuario, id: this.usuarios.length + 1 };
-        this.usuarios.push(novoUsuario);
-        return novoUsuario;
-    }
-    
-    update(id: number, dados: Partial<Usuario>): Usuario {
-        const index = this.usuarios.findIndex((u) => u.id === id);
-        this.usuarios[index] = { ...this.usuarios[index], ...dados };
-         return this.usuarios[index];
-     }
+  async findOne(id: number): Promise<Usuario> {
+    const usuario = await this.prisma.usuario.findUnique({ where: { id } });
+    if (!usuario) throw new NotFoundException(`Usuário ${id} não encontrado`);
+    return usuario;
+  }
 
-    remove(id: number): void {
-        this.usuarios = this.usuarios.filter((u) => u.id !== id);
-    }
+  async create(data: Omit<Usuario, 'id'>): Promise<Usuario> {
+    return this.prisma.usuario.create({ data });
+  }
 
+  async update(id: number, data: Partial<Omit<Usuario, 'id'>>): Promise<Usuario> {
+    await this.findOne(id); // Valida se existe antes de atualizar
+    return this.prisma.usuario.update({ where: { id }, data });
+  }
+
+  async remove(id: number): Promise<Usuario> {
+    await this.findOne(id); // Valida se existe antes de deletar
+    return this.prisma.usuario.delete({ where: { id } });
+  }
 }

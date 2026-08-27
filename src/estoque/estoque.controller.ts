@@ -1,32 +1,34 @@
 import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
-import { EstoqueService, Estoque } from './estoque.service';
+import { EstoqueService } from './estoque.service';
+import { CreateEstoqueDto } from './dto/create-estoque.dto';
+import { Estoque } from '@prisma/client';
 
 @Controller('estoque')
 export class EstoqueController {
-    constructor(private readonly estoqueService: EstoqueService) {}
+  constructor(private readonly estoqueService: EstoqueService) {}
 
-    @Get()
-    findAll(): Estoque[] {
-        return this.estoqueService.findAll();
-    }
-    
-    @Get(':id')
-    findOne(@Param('id') id: number): Estoque | undefined {
-        return this.estoqueService.findOne(id);
-    }
+  @Get()
+  async findAll(): Promise<Estoque[]> {
+    return await this.estoqueService.findAll();
+  }
 
-    @Post()
-    create(@Body() estoque: Omit<Estoque, 'id'>): Estoque | undefined {
-        return this.estoqueService.create(estoque);
-    }
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<Estoque> {
+    return await this.estoqueService.findOne(Number(id));
+  }
 
-    @Put(':id')
-    update(@Param('id') id: number, @Body() dados: Partial<Estoque>): Estoque | undefined {
-        return this.estoqueService.update(id, dados);
-    }
+  @Post()
+  async create(@Body() dto: CreateEstoqueDto): Promise<Estoque> {
+    return await this.estoqueService.create(dto);
+  }
 
-    @Delete(':id')
-    remove(@Param('id') id: number): void {
-        this.estoqueService.remove(id);
-    }
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() dto: Partial<CreateEstoqueDto>): Promise<Estoque> {
+    return await this.estoqueService.update(Number(id), dto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<Estoque> {
+    return await this.estoqueService.remove(Number(id));
+  }
 }

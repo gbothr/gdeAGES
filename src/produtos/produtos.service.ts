@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface Produto {
     id: number;
@@ -12,29 +12,36 @@ export interface Produto {
 
 @Injectable()
 export class ProdutosService {
-    private produtos: Produto[] = [];
+    // Em vez de usar: private produtos: Produto[] = [];
+    // Nós injetamos a conexão com o Supabase:
+    constructor(private prisma: PrismaService) {}
 
-    findAll(): Produto[] {
-        return this.produtos;
+    async findAll(): Promise<Produto[]> {
+        return this.prisma.produto.findMany();
     }
 
-    findOne(id: number): Produto | undefined {
-        return this.produtos.find(produto => produto.id === id);
+    async findOne(id: number): Promise<Produto | null> {
+        return this.prisma.produto.findUnique({
+            where: { id: Number(id) },
+        });
     }
 
-    create(produto: Omit<Produto, 'id'>): Produto {
-        const novoProduto: Produto = { ...produto, id: this.produtos.length + 1 };
-        this.produtos.push(novoProduto);
-        return novoProduto;
+    async create(produto: Omit<Produto, 'id'>): Promise<Produto> {
+        return this.prisma.produto.create({
+            data: produto,
+        });
     }
     
-    update(id: number, dados: Partial<Produto>): Produto {
-        const index = this.produtos.findIndex((p) => p.id === id);
-        this.produtos[index] = { ...this.produtos[index], ...dados };
-         return this.produtos[index];
-     }
+    async update(id: number, dados: Partial<Produto>): Promise<Produto> {
+        return this.prisma.produto.update({
+            where: { id: Number(id) },
+            data: dados,
+        });
+    }
 
-    remove(id: number): void {
-        this.produtos = this.produtos.filter((p) => p.id !== id);
+    async remove(id: number): Promise<Produto> {
+        return this.prisma.produto.delete({
+            where: { id: Number(id) },
+        });
     }
 }

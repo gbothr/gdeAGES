@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  FARMACEUTICO
+  CAIXA
+}
+
+model Usuario {
+  id    Int    @id @default(autoincrement())
+  nome  String
+  role  Role
+  cpf   String @unique
+  senha String
+
+  vendas Venda[]
+}
+
+model Produto {
+  id             Int     @id @default(autoincrement())
+  nome           String
+  categoria      String
+  precoVenda     Float
+  precoCusto     Float
+  precisaReceita Boolean
+
+  estoques   Estoque[]
+  reposicoes Reposicao[]
+  vendas     Venda[]
+}
+
+model Estoque {
+  id               Int      @id @default(autoincrement())
+  quantidadeAtual  Int
+  quantidadeMinima Int
+  lote             String
+  validade         DateTime
+
+  produtoId Int
+  produto   Produto @relation(fields: [produtoId], references: [id])
+}
+
+model Reposicao {
+  id            Int      @id @default(autoincrement())
+  quantidade    Int
+  valorUnitario Float
+  valorTotal    Float
+  fornecedor    String
+  dataReposicao DateTime
+
+  produtoId Int
+  produto   Produto @relation(fields: [produtoId], references: [id])
+}
+
+model Venda {
+  id            Int      @id @default(autoincrement())
+  quantidade    Int
+  valorUnitario Float
+  valorTotal    Float
+  dataVenda     DateTime @default(now())
+
+  produtoId Int
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+}

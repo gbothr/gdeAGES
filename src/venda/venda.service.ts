@@ -1,40 +1,32 @@
-import { Injectable } from '@nestjs/common';
-
-export interface Venda {
-    id: number;
-    produtoId: number;
-    quantidade: number;
-    valorUnitario: number;
-    valorTotal: number;
-    dataVenda: Date;
-    usuarioId: number;
-}
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { Venda } from '@prisma/client';
 
 @Injectable()
 export class VendaService {
-    private vendas: Venda[] = [];
-    
-    findAll(): Venda[] {
-        return this.vendas;
-    }
+  constructor(private prisma: PrismaService) {}
 
-    findOne(id: number): Venda | undefined {
-        return this.vendas.find(venda => venda.id === id);
-    }
+  async findAll(): Promise<Venda[]> {
+    return this.prisma.venda.findMany({ include: { produto: true, usuario: true } });
+  }
 
-    create(venda: Omit<Venda, 'id'>): Venda {
-        const novaVenda: Venda = { ...venda, id: this.vendas.length + 1 };
-        this.vendas.push(novaVenda);
-        return novaVenda;
-    }
-    
-    update(id: number, dados: Partial<Venda>): Venda {
-        const index = this.vendas.findIndex((v) => v.id === id);
-        this.vendas[index] = { ...this.vendas[index], ...dados };
-         return this.vendas[index];
-     }
+  async findOne(id: number): Promise<Venda> {
+    const venda = await this.prisma.venda.findUnique({ where: { id }, include: { produto: true, usuario: true } });
+    if (!venda) throw new NotFoundException(`Venda ${id} não encontrada`);
+    return venda;
+  }
 
-     remove(id: number): void {
-        this.vendas = this.vendas.filter((v) => v.id !== id);
-    }
+  async create(data: Omit<Venda, 'id' | 'dataVenda'>): Promise<Venda> {
+    return this.prisma.venda.create({ data });
+  }
+
+  async update(id: number, data: Partial<Omit<Venda, 'id'>>): Promise<Venda> {
+    await this.findOne(id);
+    return this.prisma.venda.update({ where: { id }, data });
+  }
+
+  async remove(id: number): Promise<Venda> {
+    await this.findOne(id);
+    return this.prisma.venda.delete({ where: { id } });
+  }
 }

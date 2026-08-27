@@ -1,32 +1,34 @@
 import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
-import { ReposicaoService, Reposicao } from './reposicao.service';
+import { ReposicaoService } from './reposicao.service';
+import { CreateReposicaoDto } from './dto/create-reposicao.dto';
+import { Reposicao } from '@prisma/client';
 
 @Controller('reposicao')
 export class ReposicaoController {
-    constructor(private readonly reposicaoService: ReposicaoService) {}
-    
-    @Get()
-    findAll(): Reposicao[] {
-        return this.reposicaoService.findAll();
-    }
+  constructor(private readonly reposicaoService: ReposicaoService) {}
 
-    @Get(':id')
-    findOne(@Param('id') id: number): Reposicao | undefined {
-        return this.reposicaoService.findOne(id);
-    }
-    
-    @Post()
-    create(@Body() reposicao: Omit<Reposicao, 'id'>): Reposicao | undefined {
-        return this.reposicaoService.create(reposicao);
-    }
+  @Get()
+  async findAll(): Promise<Reposicao[]> {
+    return await this.reposicaoService.findAll();
+  }
 
-    @Put(':id')
-    update(@Param('id') id: number, @Body() dados: Partial<Reposicao>): Reposicao | undefined {
-        return this.reposicaoService.update(id, dados);
-    }
-    
-    @Delete(':id')
-    remove(@Param('id') id: number): void {
-        this.reposicaoService.remove(id);
-    }
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<Reposicao> {
+    return await this.reposicaoService.findOne(Number(id));
+  }
+
+  @Post()
+  async create(@Body() dto: CreateReposicaoDto): Promise<Reposicao> {
+    return await this.reposicaoService.create(dto);
+  }
+
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() dto: Partial<CreateReposicaoDto>): Promise<Reposicao> {
+    return await this.reposicaoService.update(Number(id), dto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<Reposicao> {
+    return await this.reposicaoService.remove(Number(id));
+  }
 }

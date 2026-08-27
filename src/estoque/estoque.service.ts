@@ -1,40 +1,32 @@
-import { Injectable } from '@nestjs/common';
-
-export interface Estoque{
-    id: number;
-    produtoId: number;
-    quantidadeAtual: number;
-    quantidadeMinima: number;
-    lote: string;
-    validade: Date;
-}
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { Estoque } from '@prisma/client';
 
 @Injectable()
 export class EstoqueService {
-    private estoque: Estoque[] = [];
+  constructor(private prisma: PrismaService) {}
 
-    findAll(): Estoque[] {
-        return this.estoque;
-    }
+  async findAll(): Promise<Estoque[]> {
+    return this.prisma.estoque.findMany({ include: { produto: true } });
+  }
 
-    findOne(id: number): Estoque | undefined {
-        return this.estoque.find(estoque => estoque.id === id);
-    }
+  async findOne(id: number): Promise<Estoque> {
+    const estoque = await this.prisma.estoque.findUnique({ where: { id }, include: { produto: true } });
+    if (!estoque) throw new NotFoundException(`Estoque ${id} não encontrado`);
+    return estoque;
+  }
 
-    create(estoque: Omit<Estoque, 'id'>): Estoque {
-        const novoEstoque: Estoque = { ...estoque, id: this.estoque.length + 1 };
-        this.estoque.push(novoEstoque);
-        return novoEstoque;
-    }
+  async create(data: Omit<Estoque, 'id'>): Promise<Estoque> {
+    return this.prisma.estoque.create({ data });
+  }
 
-    update(id: number, dados: Partial<Estoque>): Estoque {
-        const index = this.estoque.findIndex((e) => e.id === id);
-        this.estoque[index] = { ...this.estoque[index], ...dados };
-         return this.estoque[index];
-     }
-     
-    remove(id: number): void {
-        this.estoque = this.estoque.filter((e) => e.id !== id);
-    }
+  async update(id: number, data: Partial<Omit<Estoque, 'id'>>): Promise<Estoque> {
+    await this.findOne(id);
+    return this.prisma.estoque.update({ where: { id }, data });
+  }
 
+  async remove(id: number): Promise<Estoque> {
+    await this.findOne(id);
+    return this.prisma.estoque.delete({ where: { id } });
+  }
 }

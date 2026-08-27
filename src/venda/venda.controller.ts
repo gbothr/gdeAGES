@@ -1,32 +1,34 @@
 import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
-import { VendaService, Venda } from './venda.service';
+import { VendaService } from './venda.service';
+import { CreateVendaDto } from './dto/create-venda.dto';
+import { Venda } from '@prisma/client';
 
 @Controller('venda')
 export class VendaController {
-    constructor(private readonly vendaService: VendaService) {}
+  constructor(private readonly vendaService: VendaService) {}
 
-    @Get()
-    findAll(): Venda[] {
-        return this.vendaService.findAll();
-    }
+  @Get()
+  async findAll(): Promise<Venda[]> {
+    return await this.vendaService.findAll();
+  }
 
-    @Get(':id')
-    findOne(@Param('id') id: number): Venda | undefined {
-        return this.vendaService.findOne(id);
-    }
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<Venda> {
+    return await this.vendaService.findOne(Number(id));
+  }
 
-    @Post()
-    create(@Body() venda: Omit<Venda, 'id'>): Venda | undefined {
-        return this.vendaService.create(venda);
-    }
+  @Post()
+  async create(@Body() dto: CreateVendaDto): Promise<Venda> {
+    return await this.vendaService.create(dto);
+  }
 
-    @Put(':id')
-    update(@Param('id') id: number, @Body() dados: Partial<Venda>): Venda | undefined {
-        return this.vendaService.update(id, dados);
-    }
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() dto: Partial<CreateVendaDto>): Promise<Venda> {
+    return await this.vendaService.update(Number(id), dto);
+  }
 
-    @Delete(':id')
-    remove(@Param('id') id: number): void {
-        this.vendaService.remove(id);
-    }
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<Venda> {
+    return await this.vendaService.remove(Number(id));
+  }
 }
